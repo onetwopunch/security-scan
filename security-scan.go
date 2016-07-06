@@ -12,28 +12,19 @@ import (
 	"strings"
 )
 
-var scanners []*Scanner
-
-func init() {
-	scanners = []*Scanner{
-		NewScanner("Toml-Syntax", "(password|secret) = ['\"].*?"),
-		NewScanner("AWS Access Key ID", "AKIA[0-9A-Z]{16}"),
-		NewScanner("Redis URL with Password", "redis://[0-9a-zA-Z:@.\\-]+"),
-		NewScanner("Google Access Token", "ya29.[0-9a-zA-Z_\\-]{68}"),
-		NewScanner("Google API", "AIzaSy[0-9a-zA-Z_\\-]{33}"),
-	}
-}
-
 func main() {
 	var err error
 	var outfile *os.File
 	var lines []string
 
 	dir := flag.String("git", "", "Git working directory to scan (defaults to current working directory)")
-	output := flag.String("o", "security_scan.csv", "Output CSV filename")
+	output := flag.String("o", "security-scan.csv", "Output CSV filename")
+	gopath := os.Getenv("GOPATH")
+	defaultMatchersPath := filepath.Join(gopath, "src", "github.com", "onetwopunch", "security-scan", "matchers.json")
+	matchers := flag.String("m", defaultMatchersPath, "JSON file containing a list of matchers\n\t[\n\t  {\n\t    \"description\":string,\n\t    \"regex\":string\n\t  }, ...\n\t]\n\t")
+	scanners := NewScanList(*matchers)
 	help := flag.Bool("h", false, "Usage")
 	flag.Parse()
-
 	if *help {
 		os.Exit(Usage())
 	}
@@ -43,21 +34,22 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	fmt.Printf("Reading Git history from %s...\n", *dir)
 	lines, err = gitLog(*dir)
 	if err != nil {
 		log.Fatal(err)
 		Usage()
 	}
 	writer := csv.NewWriter(outfile)
-	header := []string{"Provider", "Filename", "Commit", "Author", "Line"}
+	header := []string{"Description", "Filename", "Commit", "Author", "Line"}
 	writer.Write(header)
 	writer.Flush()
 
 	for _, scanner := range scanners {
+		fmt.Printf("[%v] Matches Found: 0\r", scanner.description)
 		for _, line := range lines {
 			if scanner.ScanLine(line) {
-				fmt.Printf("[%v] Matches Found: %v\r", scanner.provider, len(scanner.matches))
+				fmt.Printf("[%v] Matches Found: %v\r", scanner.description, len(scanner.matches))
 			}
 		}
 		fmt.Printf("\n")

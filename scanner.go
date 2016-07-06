@@ -12,9 +12,9 @@ type Match struct {
 	author   string
 }
 
-func (match *Match) ArrayWithProvider(provider string) []string {
+func (match *Match) ArrayWithDescription(description string) []string {
 	return []string{
-		provider,
+		description,
 		match.filename,
 		match.commit,
 		match.author,
@@ -23,7 +23,7 @@ func (match *Match) ArrayWithProvider(provider string) []string {
 }
 
 type Scanner struct {
-	provider     string
+	description  string
 	re           *regexp.Regexp
 	matches      []Match
 	currAuthor   string
@@ -35,8 +35,8 @@ var reFilename *regexp.Regexp = regexp.MustCompile("[+-]{3} (a/(.*?$)|b/(.*?$))"
 var reCommit *regexp.Regexp = regexp.MustCompile("^commit ([a-f0-9]{40})")
 var reAuthor *regexp.Regexp = regexp.MustCompile("Author: (.*?) <")
 
-func NewScanner(provider string, pattern string) *Scanner {
-	scanner := Scanner{provider: provider}
+func NewScanner(description string, pattern string) *Scanner {
+	scanner := Scanner{description: description}
 	scanner.re = regexp.MustCompile(pattern)
 	return &scanner
 }
@@ -78,7 +78,7 @@ func (me *Scanner) ScanLine(line string) bool {
 func (me *Scanner) Records() [][]string {
 	res := [][]string{}
 	for _, match := range me.matches {
-		res = append(res, match.ArrayWithProvider(me.provider))
+		res = append(res, match.ArrayWithDescription(me.description))
 	}
 	return res
 }
