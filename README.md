@@ -73,3 +73,19 @@ security-scan -m my_matchers.json -git /path/to/repo
 ### Contributing
 
 If you feel like your matcher is generic enough to add to the default, please feel free to submit a PR. As well, PR's are always welcome.
+
+### Development
+
+I like to use Make to encapsulate some common commands...sue me. It makes things nice when dealing with Go, so if you want to build just run:
+
+```
+make
+```
+
+Which will also run `fmt` and `vet`. The output will be in build, so to test just run `make` and then execute `./build/security-scan` with whatever args you need.
+
+```
+make install
+```
+
+Will install into your Go path
